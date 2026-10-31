@@ -460,7 +460,7 @@ class ConfigWidget(DefaultConfigWidget):
         self.gb.hide()
 
         # Now we want to move over the listview into the new layout. We'll also style it a bit.
-        self.gb.l.removeWidget(self.fields_view)
+        self.gb.layout().removeWidget(self.fields_view)
         self.l_ext.addWidget(self.fields_view)
         self.fields_view.setStyleSheet('QListView::item { margin: 2px 0; }')
         self.fields_view.setSelectionMode(QAbstractItemView.NoSelection)
