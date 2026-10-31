@@ -1,5 +1,30 @@
 # Goodreads More Tags
 
+## About this fork
+
+This is a fork of [MaienM/calibre-plugin-goodread-more-tags](https://github.com/MaienM/calibre-plugin-goodread-more-tags).
+Upstream has had no commits since version 1.2.1 in November 2020, and the plugin needs fixes to keep working with
+current calibre and the current Goodreads site. This fork exists to carry those fixes.
+
+### Where 1.2.1.2 came from
+
+The calibre plugin index offers version 1.2.1.2, but that version was never committed upstream. It exists only as the
+zip on the [plugin index](https://plugins.calibre-ebook.com/), which mirrors the attachment on the first post of the
+[MobileRead thread](https://www.mobileread.com/forums/showthread.php?p=3875236). The thread's version history stops at
+1.2.1, and the index still credits the original author, so who made 1.2.1.2 is unknown. The files inside the zip are
+dated May and July 2022.
+
+The `v1.2.1.2` tag is that zip's contents, committed verbatim on top of upstream's `v1.2.1`. Before importing it, I
+checked two things:
+
+- The 1.2.1 zip previously served by the index is byte-identical to upstream's `v1.2.1` source.
+- The 1.2.1.2 changes are limited to a Qt6 port of the settings dialog and a fix to how the shelves page is read (see
+  the version history below). They add no network, filesystem, `exec`, or subprocess calls.
+
+Tags up to `v1.2.1` are upstream's. Later tags belong to this fork.
+
+## Overview
+
 This plugin scrapes the shelves page of Goodreads to provide more tags than the top 4 (which are shown on the main page
 and scraped by the Goodreads plugin).
 
@@ -16,7 +41,7 @@ of the genre -> tag mapping included in that plugin.
 
 ## Special Notes
 
-- Requires Calibre 0.8 or later.
+- Requires calibre 5.0 or later.
 - If used without the base Goodreads plugin, it will only get tags for books that have a Goodreads identifier.
 
 ## Installation Notes
@@ -26,6 +51,12 @@ of the genre -> tag mapping included in that plugin.
 - Customize your desired genre -> tag mappings and other options from the metadata download configuration screen. Hover over the ? symbols to get an explanation of what the various options do.
 
 ## Version History
+
+<b>Version 1.2.1.2</b> - 2022 (exact date unknown; not an upstream release, see "Where 1.2.1.2 came from")
+
+- Ported the settings dialog to Qt6, for calibre 6 and later.
+- Fixed reading shelf counts after Goodreads changed the shelves page markup.
+- Raised the minimum calibre version to 5.0.
 
 <b>Version 1.2.1</b> - 15 November 2020
 
