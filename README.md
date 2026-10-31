@@ -52,6 +52,12 @@ of the genre -> tag mapping included in that plugin.
 
 ## Version History
 
+<b>Version 1.2.1.3</b> - 31 October 2026
+
+- Fixed the settings dialog failing to open on calibre 9
+  ([#1](https://github.com/garie/calibre-plugin-goodreads-more-tags/issues/1)).
+- Fixed error logging when fetching or parsing a shelves page fails.
+
 <b>Version 1.2.1.2</b> - 2022 (exact date unknown; not an upstream release, see "Where 1.2.1.2 came from")
 
 - Ported the settings dialog to Qt6, for calibre 6 and later.
