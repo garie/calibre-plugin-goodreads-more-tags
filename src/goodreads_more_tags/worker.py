@@ -88,7 +88,7 @@ class Worker(Thread):
             self.log.error('[{identifier}] Failed to retrieve {url}: {error}'.format(
                 identifier = self.identifier,
                 url = self.url,
-                error = e.message,
+                error = e,
             ))
             return
 
@@ -100,7 +100,7 @@ class Worker(Thread):
             self.log.error('[{identifier}] Failed to parse result of {url}: {error}'.format(
                 identifier = self.identifier,
                 url = self.url,
-                error = e.message,
+                error = e,
             ))
             return
 
