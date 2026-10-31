@@ -10,12 +10,9 @@ def monkeypatch_s():
     mpatch.undo()
 
 @pytest.fixture(scope = 'session')
-def tmpdir_s(request, tmpdir_factory):
-    import re
-
-    name = request.node.name
-    name = re.sub(r"[\W]", "_", request.node.name)[:30]
-    return tmpdir_factory.mktemp(name, numbered = True)
+def tmpdir_s(tmpdir_factory):
+    # A session fixture's request.node is the session, whose name pytest won't accept as a directory name.
+    return tmpdir_factory.mktemp('session', numbered = True)
 
 
 @pytest.fixture(scope = 'session')

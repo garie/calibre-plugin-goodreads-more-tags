@@ -4,4 +4,3 @@ pytest
 pytest-cov
 pytest-randomly
 pytest-timeout
-pytest-xdist

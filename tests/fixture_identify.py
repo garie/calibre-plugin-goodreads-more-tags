@@ -13,7 +13,7 @@ import pytest
 def identify():
     from calibre.customize.ui import enable_plugin
     from calibre.ebooks.metadata.sources.identify import identify as calibre_identify
-    from calibre.ebooks.metadata.sources.test import create_log
+    from calibre.utils.logging import FileStream, ThreadSafeLog
 
     captures = []
 
@@ -27,8 +27,8 @@ def identify():
 
         # Create a log that both outputs to stdout as well as a capture.
         # capsys/capfs do not work, unfortunately.
-        from calibre.utils.logging import FileStream
-        log = create_log(sys.stdout)
+        log = ThreadSafeLog(level = ThreadSafeLog.DEBUG)
+        log.outputs = [FileStream(sys.stdout)]
         capture = StringIO()
         captures.append(capture)
         log.outputs.append(FileStream(capture))

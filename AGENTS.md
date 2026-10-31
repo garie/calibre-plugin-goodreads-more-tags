@@ -38,11 +38,28 @@ Breakage comes from outside the plugin, and it has two causes. The issue labels 
 
 ## Testing
 
-The pytest suite under `tests/` doesn't run on macOS (see issue
-[#2](https://github.com/garie/calibre-plugin-goodreads-more-tags/issues/2)), and it hasn't been run on Linux in this
-fork either. Don't report it as passing or failing.
+Run the pytest suite with `scripts/pytest.sh` (arguments go to pytest, e.g. `scripts/pytest.sh tests/test_config.py`).
+Bare `pytest` or `uv run pytest` can't import calibre and stops with a usage error. The script:
 
-What does work:
+- runs pytest inside `calibre-debug`, because calibre's modules only import from its own frozen Python. pytest comes
+  from `.venv`, which the script creates with `uv` at calibre's Python version (3.14 for calibre 9).
+- installs `src/goodreads_more_tags` and the Goodreads plugin into a throwaway `CALIBRE_CONFIG_DIRECTORY`, so your
+  real calibre config is never touched. The Goodreads plugin comes from your calibre config unless
+  `GOODREADS_PLUGIN_ZIP` is set. `CALIBRE_BIN` overrides where calibre's tools are found.
+
+Things that follow from running inside calibre:
+
+- calibre's Python runs with `-OO`: plain `assert` in non-test modules is a no-op, and docstrings are stripped, which
+  is why `tests/test_doctests.py` exists in place of `--doctest-modules`. Put assertions in test modules or conftest,
+  which pytest rewrites.
+- No `pytest-xdist`: its workers start `sys.executable`, which here is `calibre-debug`.
+- No useful `--cov`: tests exercise the copy calibre installed as `calibre_plugins.goodreads_more_tags`, never `src/`.
+
+The suite currently has failures in the identify tests, which hit goodreads.com live or replay outdated recorded pages.
+Check the [`tests` issues](https://github.com/garie/calibre-plugin-goodreads-more-tags/issues?q=label%3Atests) before
+treating a failure as new. It has been run on macOS only, not Linux.
+
+The suite doesn't cover the settings dialog or real scraping. Check those by hand:
 
 1. Build a zip (see below) and install it in calibre.
 2. **Settings dialog:** Preferences → Metadata download → select Goodreads More Tags → Configure selected source.
