@@ -23,7 +23,14 @@ Breakage comes from outside the plugin, and it has two causes. The issue labels 
 - `compat-calibre`: calibre or Qt changed under the plugin (Qt6 port, `ConfigWidget` internals). The settings dialog
   is the usual casualty.
 - `compat-goodreads`: Goodreads changed its pages, or the Goodreads plugin changed the internals the hook relies on.
-  To diagnose, fetch a shelves page with `curl` and compare its markup with the XPaths in `worker.py`.
+  To diagnose, fetch a shelves page with `curl` and compare its markup with the XPaths in `worker.py`. If Goodreads
+  is blocking requests, see [ADR 002](docs/adr/002-fetch-goodreads-without-camoufox.md) before reaching for
+  calibre's Camoufox browser.
+
+## Decisions
+
+Decisions and their reasons are recorded as ADRs in `docs/adr/`. Read the relevant ones before revisiting a decision.
+To record a new one, follow [docs/adr/README.md](docs/adr/README.md).
 
 ## Qt and calibre gotchas
 
