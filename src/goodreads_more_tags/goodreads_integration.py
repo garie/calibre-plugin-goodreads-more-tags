@@ -200,22 +200,23 @@ def intercept_Goodreads_Worker_run(self):
     queue = self.result_queue
     self.result_queue = Queue()
 
-    # Run the regular worker.
-    result = self._run_original()
-    self.log.debug('[GoodreadsMoreTags] Captured {} result(s) for {}'.format(
-        self.result_queue.qsize(),
-        shared_data.identifier,
-    ))
+    # Run the regular worker. Whatever happens, mark the shared data as done, as the GMT identify waits for that.
+    try:
+        return self._run_original()
+    finally:
+        self.log.debug('[GoodreadsMoreTags] Captured {} result(s) for {}'.format(
+            self.result_queue.qsize(),
+            shared_data.identifier,
+        ))
 
-    # Add the results to the real result queue, and to the shared data, and then mark as done in the shared data.
-    while not self.result_queue.empty():
-        result = self.result_queue.get()
-        queue.put(result)
-        shared_data.results.put(result)
-    shared_data.is_done.set()
-    self.result_queue = queue
-
-    return result
+        # Add the results to the real result queue and to the shared data. All results must be in the shared data
+        # before it is marked as done: the GMT identify reads an empty queue at that point as "no result".
+        while not self.result_queue.empty():
+            goodreads_result = self.result_queue.get()
+            queue.put(goodreads_result)
+            shared_data.results.put(goodreads_result)
+        shared_data.is_done.set()
+        self.result_queue = queue
 
 
 def inject_into_goodreads():

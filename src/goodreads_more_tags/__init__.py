@@ -2,10 +2,10 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 try:
-    from queue import Queue
+    from queue import Empty, Queue
 except:
     # Python 2.x
-    from Queue import Queue
+    from Queue import Empty, Queue
 
 from calibre.ebooks.metadata.sources.base import Source
 
@@ -134,9 +134,15 @@ class GoodreadsMoreTags(Source):
                 log.warn('[{}] No goodreads result found (1), not copying id, title & author'.format(identifier))
                 result_queue.put(result)
                 continue
-            shared_datum.is_done.wait()
-
-            goodreads_result = shared_datum.results.get()
+            # The Goodreads worker may still be running. Its results are all queued before it is marked as done, so an
+            # empty queue after that means it found nothing.
+            while not shared_datum.is_done.wait(0.1):
+                if abort.is_set():
+                    return
+            try:
+                goodreads_result = shared_datum.results.get_nowait()
+            except Empty:
+                goodreads_result = None
             if goodreads_result is None:
                 log.warn('[{}] No goodreads result found (2), not copying id, title & author'.format(identifier))
                 result_queue.put(result)

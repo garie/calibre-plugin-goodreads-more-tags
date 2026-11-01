@@ -179,6 +179,34 @@ class TestInterceptMethod(object):
         assert self.sum(2, 4) == 16
 
 
+@pytest.mark.timeout(60)
+class TestIdentifyIntegratedGoodreadsFindsNothing(object):
+    """
+    The Goodreads plugin can come up empty for a book whose shelves page is still readable, e.g. when Goodreads changes
+    its book page markup. The shelves must still be returned, without waiting for a Goodreads result that won't come.
+    """
+    @pytest.fixture(autouse = True)
+    def setup_browser_mock(self, browser):
+        with open(os.path.join(os.path.dirname(__file__), '_responses', 'goodreads-shelves-902715.html'), 'rb') as f:
+            shelves = f.read()
+        pre = r'^https?://(www\.)?goodreads\.com/book/'
+        browser.add_response(pre + r'show/902715\D*$', b'<html><head><title>Not a book</title></head></html>')
+        browser.add_response(pre + r'shelves/902715\D*$', shelves)
+
+    @pytest.fixture(autouse = True)
+    def timeouts(self, configs):
+        from calibre.ebooks.metadata.sources.prefs import msprefs
+        msprefs['wait_after_first_identify_result'] = 20
+        configs.goodreads_more_tags.integration_timeout = 10
+
+    def test_goodreads_id(self, identify):
+        results = identify(plugins = [Goodreads, GoodreadsMoreTags], identifiers = { 'goodreads': '902715' })
+        log = ''.join(capture.getvalue() for capture in identify.captures)
+        assert 'Still running sources' not in log
+        assert len(results) == 1
+        assert sorted(results[0].tags) == ['Adult', 'Adventure', 'Fantasy', 'Science Fiction', 'War']
+
+
 @pytest.mark.parametrize('execution_number', range(10))
 @pytest.mark.timeout(30)
 class TestIdentifyIntegrated(object):
