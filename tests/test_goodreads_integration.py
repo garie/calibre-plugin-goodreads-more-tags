@@ -248,39 +248,8 @@ class TestIdentifyIntegratedGoodreadsFindsNothing(object):
 
 @pytest.mark.parametrize('execution_number', range(10))
 @pytest.mark.timeout(30)
+@pytest.mark.usefixtures('recorded_responses')
 class TestIdentifyIntegrated(object):
-    @pytest.fixture(autouse = True)
-    def setup_browser_mock(self, browser):
-        missing_files = []
-
-        basedir = os.path.join(os.path.dirname(__file__), '_responses')
-
-        def add(url_regex, filename_pattern):
-            def read_file(match):
-                filename = filename_pattern.format(**match.groupdict())
-                try:
-                    with open(os.path.join(basedir, filename), 'rb') as file:
-                        return file.read()
-                except IOError:
-                    print('Response file {} not found, not providing response for {}'.format(filename, match.group(0)))
-                    missing_files.append(filename)
-                    return None
-            browser.add_response(url_regex, read_file)
-
-        pre = r'^https?://(www\.)?'
-
-        # Goodreads
-        add(pre + r'goodreads\.com/book/show/(?P<id>\d+)\D*$', 'goodreads-book-{id}.html')
-        add(pre + r'goodreads\.com/book/shelves/(?P<id>\d+)\D*$', 'goodreads-shelves-{id}.html')
-        add(pre + r'goodreads\.com/book/auto_complete\?.*&q=(?P<id>\d+)$', 'goodreads-autocomplete-{id}.json')
-        add(pre + r'i\.gr-assets\.com/images/.*/books/.*/\d+\..*\.jpg$', 'cover.jpg')
-
-        yield
-
-        # The plugins log and swallow the mock browser's error for a missing response, so the test itself fails in some
-        # unrelated way. Report the missing file here.
-        assert not missing_files, 'Missing response files: {}'.format(', '.join(missing_files))
-
     @pytest.fixture(autouse = True)
     def detect_deadlock(self, configs, identify):
         # Since all browser results are mocked, everything should complete fairly quickly. The main factor here is

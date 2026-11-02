@@ -6,6 +6,9 @@ from calibre.customize.ui import find_plugin
 from calibre_plugins.goodreads_more_tags import GoodreadsMoreTags
 
 
+pytestmark = pytest.mark.usefixtures('recorded_responses')
+
+
 @pytest.fixture(autouse = True)
 def disable_integration(configs):
     configs.goodreads_more_tags.integration_enabled = False
