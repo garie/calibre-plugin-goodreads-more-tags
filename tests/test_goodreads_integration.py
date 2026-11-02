@@ -14,7 +14,8 @@ except ImportError:
     from mock import Mock
 
 from calibre.customize.ui import find_plugin
-from calibre.ebooks.metadata.sources.amazon import Amazon
+from calibre.ebooks.metadata.book.base import Metadata
+from calibre.ebooks.metadata.sources.base import Source
 from calibre_plugins.goodreads import Goodreads
 from calibre_plugins.goodreads_more_tags import GoodreadsMoreTags
 import calibre_plugins.goodreads_more_tags.goodreads_integration as tm
@@ -37,6 +38,44 @@ def no_tags_from_other_plugins():
         if 'ignore_fields' not in plugin.prefs:
             plugin.prefs['ignore_fields'] = []
         plugin.prefs['ignore_fields'].append('tags')
+
+
+class OtherSource(Source):
+    """
+    A metadata source that returns one fixed result, with an ISBN but no Goodreads identifier.
+
+    This stands in for a real second source such as Amazon. calibre's Amazon source fetches pages with headless browsers
+    that the browser fixture can't mock.
+    """
+    name = 'Other Source'
+    version = (1, 0, 0)
+    capabilities = frozenset(['identify'])
+    touched_fields = frozenset(['title', 'authors', 'identifier:amazon', 'identifier:isbn'])
+
+    def identify(self, log, result_queue, abort, title = None, authors = None, identifiers = {}, timeout = 30):
+        result = Metadata("The Ultimate Hitchhiker's Guide", ['Douglas Adams'])
+        result.set_identifier('amazon', '0385347308')
+        result.isbn = '9780385347303'
+        result.source_relevance = 0
+        result_queue.put(result)
+
+
+@pytest.fixture
+def other_source(monkeypatch):
+    """ Make OtherSource available to identify, which otherwise only uses the installed metadata sources. """
+    import calibre.ebooks.metadata.sources.identify as identify_module
+
+    plugin = OtherSource(None)
+    installed_plugins = identify_module.metadata_plugins
+
+    def metadata_plugins(capabilities):
+        plugins = list(installed_plugins(capabilities))
+        if frozenset(capabilities) <= plugin.capabilities:
+            plugins.append(plugin)
+        return plugins
+
+    monkeypatch.setattr(identify_module, 'metadata_plugins', metadata_plugins)
+    return OtherSource
 
 
 class TestQueueHandler(object):
@@ -236,13 +275,6 @@ class TestIdentifyIntegrated(object):
         add(pre + r'goodreads\.com/book/auto_complete\?.*&q=(?P<id>\d+)$', 'goodreads-autocomplete-{id}.json')
         add(pre + r'i\.gr-assets\.com/images/.*/books/.*/\d+\..*\.jpg$', 'cover.jpg')
 
-        # Amazon/Amazon Multiple Countries
-        query_pattern = r'(%28)?(?P<id>\d+)\+.*site%3A(www\.)?amazon\.(?P<tld>[a-z.]+)'
-        add(pre + r'google\.com/search\?q=' + query_pattern, 'google-{id}-amazon.{tld}.html')
-        add(pre + r'webcache\.googleusercontent\.com/search\?q=cache:(?P<id>[^:]+):', 'google-result-{id}.html')
-        add(pre + r'bing\.com/search\?q=' + query_pattern, 'bing-{id}-amazon.{tld}.html')
-        add(pre + r'cc.bingj.com/cache.aspx\?.*&d=(?P<id>\d+)&', 'bing-result-{id}.html')
-
         yield
 
         assert not failed_response
@@ -277,14 +309,14 @@ class TestIdentifyIntegrated(object):
         assert len(results) == 1
         assert sorted(results[0].tags) == ['Adult', 'Adventure', 'Fantasy', 'Science Fiction', 'War']
 
-    def test_other_source_no_goodreads_id(self, identify, execution_number):
+    def test_other_source_no_goodreads_id(self, identify, other_source, execution_number):
         """
         I found that when adding in a different source that will return an isbn, but not a goodreads id, merging
         sometimes failes. Including all identifiers that goodreads returns in the goodreads more tags result resolves
         this.
         """
         results = identify(
-            plugins = [Goodreads, GoodreadsMoreTags, Amazon],
+            plugins = [Goodreads, GoodreadsMoreTags, other_source],
             identifiers = {
                 'amazon': '0385347308',
                 'goodreads': '18133416',
@@ -292,13 +324,13 @@ class TestIdentifyIntegrated(object):
         )
         assert len(results) == 1
 
-    def test_other_source_no_goodreads_id_without_goodreads_plugin(self, identify, execution_number):
+    def test_other_source_no_goodreads_id_without_goodreads_plugin(self, identify, other_source, execution_number):
         """
         Similar to the previous test, but now without the goodreads plugin present. Merging should still succeed due to
         the isbn being included in the returned identifiers.
         """
         results = identify(
-            plugins = [GoodreadsMoreTags, Amazon],
+            plugins = [GoodreadsMoreTags, other_source],
             identifiers = {
                 'isbn': '9780385347303',
                 'goodreads': '18133416',

@@ -4,7 +4,7 @@ import sys
 
 import pytest
 
-from tests.fixture_browser import browser
+from tests.fixture_browser import browser, no_headless_browsers
 from tests.fixture_configs import *
 from tests.fixture_fix_underscore import fix_underscore
 from tests.fixture_generic import *

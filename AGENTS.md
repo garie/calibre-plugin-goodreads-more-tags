@@ -50,8 +50,8 @@ Bare `pytest` or `uv run pytest` can't import calibre and stops with a usage err
 
 - runs pytest inside `calibre-debug`, because calibre's modules only import from its own frozen Python. pytest comes
   from `.venv`, which the script creates with `uv` at calibre's Python version (3.14 for calibre 9).
-- installs `src/goodreads_more_tags` and the Goodreads plugin into a throwaway `CALIBRE_CONFIG_DIRECTORY`, so your
-  real calibre config is never touched. The Goodreads plugin comes from your calibre config unless
+- installs `src/goodreads_more_tags` and the Goodreads plugin into a throwaway `CALIBRE_CONFIG_DIRECTORY`, so the
+  tests don't change your real calibre config. The Goodreads plugin comes from your calibre config unless
   `GOODREADS_PLUGIN_ZIP` is set. `CALIBRE_BIN` overrides where calibre's tools are found.
 
 Things that follow from running inside calibre:
@@ -61,6 +61,11 @@ Things that follow from running inside calibre:
   which pytest rewrites.
 - No `pytest-xdist`: its workers start `sys.executable`, which here is `calibre-debug`.
 - No useful `--cov`: tests exercise the copy calibre installed as `calibre_plugins.goodreads_more_tags`, never `src/`.
+
+The `browser` fixture mocks calibre's `Browser`. Some of calibre's metadata sources, such as Amazon, fetch with headless
+browsers instead (Camoufox and a Qt WebEngine scraper), which visit live sites and can't be mocked. The
+`no_headless_browsers` fixture makes launching either one fail, so don't use those sources in tests. Where a test needs
+a second source, use a fake one like `OtherSource` in `tests/test_goodreads_integration.py`.
 
 The suite currently has failures in the identify tests, which hit goodreads.com live or replay outdated recorded pages.
 Check the [`tests` issues](https://github.com/garie/calibre-plugin-goodreads-more-tags/issues?q=label%3Atests) before
