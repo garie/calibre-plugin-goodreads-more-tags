@@ -251,7 +251,7 @@ class TestIdentifyIntegratedGoodreadsFindsNothing(object):
 class TestIdentifyIntegrated(object):
     @pytest.fixture(autouse = True)
     def setup_browser_mock(self, browser):
-        failed_response = False
+        missing_files = []
 
         basedir = os.path.join(os.path.dirname(__file__), '_responses')
 
@@ -263,7 +263,7 @@ class TestIdentifyIntegrated(object):
                         return file.read()
                 except IOError:
                     print('Response file {} not found, not providing response for {}'.format(filename, match.group(0)))
-                    failed_response = True
+                    missing_files.append(filename)
                     return None
             browser.add_response(url_regex, read_file)
 
@@ -277,7 +277,9 @@ class TestIdentifyIntegrated(object):
 
         yield
 
-        assert not failed_response
+        # The plugins log and swallow the mock browser's error for a missing response, so the test itself fails in some
+        # unrelated way. Report the missing file here.
+        assert not missing_files, 'Missing response files: {}'.format(', '.join(missing_files))
 
     @pytest.fixture(autouse = True)
     def detect_deadlock(self, configs, identify):
