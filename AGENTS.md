@@ -67,9 +67,13 @@ browsers instead (Camoufox and a Qt WebEngine scraper), which visit live sites a
 `no_headless_browsers` fixture makes launching either one fail, so don't use those sources in tests. Where a test needs
 a second source, use a fake one like `OtherSource` in `tests/test_goodreads_integration.py`.
 
-The suite currently has failures in the identify tests, which hit goodreads.com live or replay outdated recorded pages.
-Check the [`tests` issues](https://github.com/garie/calibre-plugin-goodreads-more-tags/issues?q=label%3Atests) before
-treating a failure as new. It has been run on macOS only, not Linux.
+The identify tests make no network requests: the `recorded_responses` fixture answers Goodreads requests from
+`tests/_responses/`, and fails the test if a recording is missing. The shelves recordings date from 2019 and the book
+pages from 2026-11-01, and the expected tags come from the shelves recordings. When the Goodreads plugin changes what it
+parses, re-record the book pages from the URL it requests (`/book/show/<id>.xml`). Re-recording a shelves page changes
+the expected tags.
+
+The suite has been run on macOS only, not Linux.
 
 The suite doesn't cover the settings dialog or real scraping. Check those by hand:
 
